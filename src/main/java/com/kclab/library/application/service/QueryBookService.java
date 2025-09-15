@@ -14,7 +14,7 @@ import java.util.List;
 public class QueryBookService implements QueryBookInputPort {
 
     private final BookRepositoryOutputPort bookRepository;
-    
+
 
     @Override
     public Book findByTitle(String title) {
