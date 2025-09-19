@@ -19,8 +19,8 @@ public class QueryBookService implements QueryBookInputPort {
     private final Map<String, FindStrategy> findStrategies;
 
     @Override
-    public Book findByTitle(String title) {
-        return findStrategies.get(Constant.FIND_BOOK_BY_TITLE).find(buildRequest(title)).getFirst();
+    public List<Book> findByTitle(String title) {
+        return findStrategies.get(Constant.FIND_BOOK_BY_TITLE).find(buildRequest(title));
     }
 
     @Override

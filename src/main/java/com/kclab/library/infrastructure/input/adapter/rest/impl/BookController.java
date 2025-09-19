@@ -1,6 +1,9 @@
 package com.kclab.library.infrastructure.input.adapter.rest.impl;
 
 import com.kclab.library.application.input.port.CreateBookInputPort;
+import com.kclab.library.application.input.port.QueryBookInputPort;
+import com.kclab.library.application.input.port.QueryBookProviderInputPort;
+import com.kclab.library.domain.model.QueryBookRequest;
 import com.kclab.services.server.ApiApi;
 import com.kclab.services.server.models.*;
 import lombok.RequiredArgsConstructor;
@@ -17,10 +20,18 @@ import java.util.UUID;
 public class BookController implements ApiApi {
 
     private final CreateBookInputPort createBookInputPort;
+    private final QueryBookProviderInputPort queryBookProviderInputPort;
 
 
     @Override
     public ResponseEntity<BookList> apiBooksGet(String title, String author, String strategy, Integer page, Integer size) {
+        queryBookProviderInputPort.getBooks(
+                QueryBookRequest
+                        .builder()
+                        .author(author)
+                        .title(title)
+                        .build()
+        );
         return null;
     }
 
