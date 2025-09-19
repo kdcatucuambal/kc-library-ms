@@ -2,6 +2,8 @@ package com.kclab.library.application.service.validator;
 
 import com.kclab.library.application.input.port.QueryBookInputPort;
 import com.kclab.library.application.output.port.BookRepositoryOutputPort;
+import com.kclab.library.domain.exception.BookAlreadyExistException;
+import com.kclab.library.domain.exception.InvalidBookException;
 import com.kclab.library.domain.model.Book;
 import com.kclab.library.shared.lib.AbstractValidationHandler;
 import com.kclab.library.shared.lib.ValidatorContext;
@@ -28,14 +30,14 @@ public class TitleBookValidator extends AbstractValidationHandler {
 
     private void validateBook(Book book) {
         if (book == null || book.getTitle() == null || book.getTitle().isEmpty()) {
-            throw new IllegalArgumentException("Book title must not be null or empty.");
+            throw new InvalidBookException("Book title cannot be null or empty.");
         }
     }
 
 
     private void validateIfBookExists(String title) {
         if (bookRepository.findByTitle(title).isPresent()) {
-            throw new IllegalArgumentException("Book with title '" + title + "' already exists.");
+            throw new BookAlreadyExistException(String.format("Book with title %s already exists.", title));
         }
     }
 

@@ -2,6 +2,7 @@ package com.kclab.library.application.service;
 
 import com.kclab.library.application.input.port.CreateBookInputPort;
 import com.kclab.library.application.output.port.BookRepositoryOutputPort;
+import com.kclab.library.application.service.factory.BookFactoryProvider;
 import com.kclab.library.application.service.validator.AuthorBookValidator;
 import com.kclab.library.application.service.validator.TitleBookValidator;
 import com.kclab.library.domain.model.Book;
@@ -27,7 +28,13 @@ public class CreateBookService implements CreateBookInputPort {
         book.setId(UUID.randomUUID().toString());
         var validatorContext = validateBook(book);
         log.info("Book validation passed: {}", validatorContext);
-        return this.bookRepository.save(book);
+        var bookProvided = BookFactoryProvider.createBook(
+                book.getFormat(),
+                book.getType(),
+                book.getTitle(),
+                book.getAuthor(),
+                book.getId());
+        return this.bookRepository.save(bookProvided);
     }
 
     private ValidatorContext validateBook(Book book) {

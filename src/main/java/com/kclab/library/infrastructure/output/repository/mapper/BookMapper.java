@@ -10,6 +10,8 @@ import org.mapstruct.MappingConstants;
 public interface BookMapper {
 
     BookEntity toEntity(Book book);
+
+
     Book toDomain(BookEntity bookEntity);
 
 

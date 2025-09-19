@@ -1,0 +1,558 @@
+openapi: 3.0.3
+info:
+  title: Biblioteca — API
+  version: "1.0.0"
+  description: |
+    API para un sistema de gestión de biblioteca (Java 21, H2) que demuestra múltiples patrones de diseño.
+    Esta especificación describe endpoints para agregar, buscar, listar y prestar libros.
+    Implementaciones requeridas (no parte del contrato): Singleton (DB), Factory Method,
+    Abstract Factory, Builder, Strategy, Observer, Decorator, Chain of Responsibility, Adapter.
+servers:
+  - url: http://localhost:8080
+    description: Servidor local (ejemplo)
+
+tags:
+  - name: Books
+    description: Operaciones sobre libros (agregar, buscar, listar, prestar)
+  - name: Observers
+    description: Registrar/listar observadores para notificaciones de préstamos
+  - name: Legacy
+    description: Endpoints para integración/adaptación de libros legacy
+
+paths:
+  /api/books:
+    post:
+      tags: [Books]
+      summary: Agregar un libro
+      description: |
+        Agrega un libro a la biblioteca. Se aplican validaciones (Chain of Responsibility:
+        ValidadorTitulo, ValidadorAutor). El servidor devolverá el libro creado.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookCreate'
+      responses:
+        "201":
+          description: Libro creado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        "400":
+          description: Validación fallida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+    get:
+      tags: [Books]
+      summary: Listar o buscar libros
+      description: |
+        Lista todos los libros o realiza búsqueda con diferentes estrategias.
+        Parámetros de consulta:
+          - ?title=...  (SearchByTitle)
+          - ?author=... (SearchByAuthor)
+        También se permite ?strategy=title|author para forzar la estrategia.
+      parameters:
+        - name: title
+          in: query
+          schema:
+            type: string
+          description: Buscar por título (parte o completo)
+        - name: author
+          in: query
+          schema:
+            type: string
+          description: Buscar por autor (parte o completo)
+        - name: strategy
+          in: query
+          schema:
+            type: string
+            enum: [title, author, smart]
+            default: smart
+          description: Estrategia de búsqueda (Strategy pattern). 'smart' = heurística que decide.
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Número de página (paginación simple)
+        - name: size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Tamaño de página
+      responses:
+        "200":
+          description: Lista de libros (posible conjunto vacío)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookList'
+        "400":
+          description: Parámetros inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/books/{id}:
+    get:
+      tags: [Books]
+      summary: Obtener libro por id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: UUID del libro
+      responses:
+        "200":
+          description: Libro encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        "404":
+          description: Libro no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags: [Books]
+      summary: Actualizar metadatos del libro
+      description: Actualiza título/autor/tipo/formato o estado; las validaciones se aplican.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookUpdate'
+      responses:
+        "200":
+          description: Libro actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        "400":
+          description: Validación fallida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        "404":
+          description: Libro no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/books/{id}/lend:
+    post:
+      tags: [Books]
+      summary: Prestar un libro
+      description: |
+        Marca un libro como PRESTADO (Decorator: PrestamoDecorator) y notifica a los observadores
+        registrados (Observer + PrestamoObserver). Si el libro no está DISPONIBLE devuelve 409.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoanRequest'
+      responses:
+        "200":
+          description: Préstamo realizado y observadores notificados
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        "404":
+          description: Libro no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "409":
+          description: Libro no disponible para préstamo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "400":
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /api/observers:
+    post:
+      tags: [Observers]
+      summary: Registrar un observador
+      description: Registra un observador que será notificado en eventos (por ejemplo, préstamos).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ObserverCreate'
+      responses:
+        "201":
+          description: Observador registrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Observer'
+        "400":
+          description: Solicitud inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+    get:
+      tags: [Observadores]
+      summary: Listar observadores registrados
+      responses:
+        "200":
+          description: Lista de observadores
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Observer'
+
+  /api/legacy-books:
+    post:
+      tags: [Legacy]
+      summary: Adaptar y registrar un libro legacy
+      description: |
+        Permite enviar un objeto LegacyLibro (formato antiguo). El servicio adapta el libro
+        (Adapter pattern: LegacyLibroAdapter) y lo registra como un `Libro` válido.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LegacyBook'
+      responses:
+        "201":
+          description: Libro legacy adaptado y registrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        "400":
+          description: Error de adaptación/validación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+components:
+  schemas:
+    # Modelo principal
+    Book:
+      type: object
+      required:
+        - id
+        - title
+        - author
+        - type
+        - format
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: UUID generado por el sistema
+        title:
+          type: string
+          description: Título del libro
+        author:
+          type: string
+          description: Nombre del autor o autores
+        type:
+          type: string
+          description: Tipo de libro (Ficción/No Ficción)
+          enum: [FICCION, NO_FICCION]
+        format:
+          type: string
+          description: Formato del libro (Físico/Digital)
+          enum: [FISICO, DIGITAL]
+        status:
+          type: string
+          description: Estado del libro en la biblioteca
+          enum: [A, NA]
+        metadata:
+          type: object
+          description: Campos adicionales (p. ej. páginas, isbn, ubicacion, urlDescarga)
+          additionalProperties: true
+      example:
+        id: "c0a8012e-0000-0000-0000-000000000001"
+        titulo: "Introducción a Patrones de Diseño"
+        autor: "Ana Pérez"
+        tipo: "NO_FICCION"
+        formato: "FISICO"
+        estado: "DISPONIBLE"
+        metadata:
+          isbn: "978-3-16-148410-0"
+          paginas: 320
+          ubicacion: "Estante A3"
+
+    # Payload para crear libro (Builder + Factory + Chain validators aplicados en servidor)
+    BookCreate:
+      type: object
+      required:
+        - title
+        - author
+        - type
+        - format
+      properties:
+        title:
+          type: string
+          description: Título del libro (no vacío)
+        author:
+          type: string
+          description: Autor del libro (validado)
+        type:
+          type: string
+          enum: [FICCION, NO_FICCION]
+        format:
+          type: string
+          enum: [FISICO, DIGITAL]
+        metadata:
+          type: object
+          description: Datos opcionales (isbn, paginas, urlDescarga...)
+          additionalProperties: true
+      example:
+        titulo: "Patrones en Java"
+        autor: "Carlos Gómez"
+        tipo: "FICCION"
+        formato: "DIGITAL"
+        metadata:
+          urlDescarga: "https://ejemplo.com/patrones.pdf"
+
+    BookUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Nuevo título
+        author:
+          type: string
+        type:
+          type: string
+          enum: [FICCION, NO_FICCION]
+        format:
+          type: string
+          enum: [FISICO, DIGITAL]
+        status:
+          type: string
+          enum: [A, NA]
+        metadata:
+          type: object
+          additionalProperties: true
+      example:
+        titulo: "Patrones en Java — 2da Ed"
+        estado: "DISPONIBLE"
+
+    BookList:
+      type: object
+      properties:
+        total:
+          type: integer
+        page:
+          type: integer
+        size:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Book'
+      example:
+        total: 1
+        page: 1
+        size: 20
+        items:
+          - $ref: '#/components/schemas/Book'
+
+    LoanRequest:
+      type: object
+      required:
+        - borrower
+        - dueDate
+      properties:
+        borrower:
+          type: string
+          description: Nombre o identificador del prestatario
+        dueDate:
+          type: string
+          format: date
+          description: Fecha de devolución esperada (YYYY-MM-DD)
+        notes:
+          type: string
+      example:
+        borrower: "usuario123"
+        dueDate: "2025-10-01"
+        notes: "Préstamo para investigación"
+
+    ObserverCreate:
+      type: object
+      required:
+        - type
+        - target
+      properties:
+        type:
+          type: string
+          enum: [EMAIL, WEBHOOK, LOG]
+          description: Tipo de observador
+        target:
+          type: string
+          description: Dirección de notificación (email, url webhook, etc.)
+        metadata:
+          type: object
+          additionalProperties: true
+      example:
+        type: "EMAIL"
+        target: "notificaciones@biblioteca.local"
+
+    Observer:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+        target:
+          type: string
+        enabled:
+          type: boolean
+      example:
+        id: "b1a7f3e8-0000-0000-0000-000000000002"
+        type: "WEBHOOK"
+        target: "https://mi-servicio/notify"
+        enabled: true
+
+    LegacyBook:
+      type: object
+      required:
+        - legacyId
+        - name
+        - writer
+      properties:
+        legacyId:
+          type: string
+          description: Identificador en el sistema legacy
+        name:
+          type: string
+          description: Título en el sistema legacy
+        writer:
+          type: string
+          description: Autor en formato legacy
+        typeFlag:
+          type: string
+          description: Flag de tipo (p. ej. 'F'/'NF')
+        kind:
+          type: string
+          description: Formato legacy (p. ej. 'P' para físico, 'D' para digital)
+        extra:
+          type: object
+          additionalProperties: true
+      example:
+        legacyId: "LEG-123"
+        name: "Vetusto Libro"
+        writer: "Autor Antiguo"
+        typeFlag: "F"
+        kind: "P"
+
+    ValidationError:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: string
+      example:
+        code: "VALIDATION_FAILED"
+        message: "Título no puede estar vacío"
+        details:
+          - "titulo: valor vacío"
+          - "autor: formato inválido"
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      example:
+        code: "NOT_FOUND"
+        message: "Libro no encontrado"
+  x-patterns:
+    description: >
+      Documentación adicional que relaciona endpoints y modelos con los patrones de diseño.
+      Estos objetos no aparecen necesariamente como payloads, pero sirven para la
+      implementación server-side.
+    patterns:
+      Singleton:
+        name: DatabaseConnection
+        description: "Única instancia de conexión H2 (in-memory)."
+      FactoryMethod:
+        name: LibroFactory
+        implementations: [FiccionFactory, NoFiccionFactory]
+      AbstractFactory:
+        name: AbstractLibroFactory
+        implementations: [LibroFisicoFactory, LibroDigitalFactory]
+      Builder:
+        name: LibroBuilder
+        description: "Construye instancias de Libro respetando invariantes."
+      Strategy:
+        name: SearchStrategy
+        implementations: [SearchByTitle, SearchByAuthor]
+      Observer:
+        name: PrestamoObserver
+        description: "Observadores que reciben notificaciones al cambiar estado."
+      Decorator:
+        name: PrestamoDecorator
+        description: "Envuelve Libro para añadir comportamiento de préstamo."
+      ChainOfResponsibility:
+        name: Validador
+        chain: [ValidadorTitulo, ValidadorAutor]
+      Adapter:
+        name: LegacyLibroAdapter
+        description: "Adapta LegacyLibro a la interfaz ILibro."
+
+
+# Ejemplos de uso (no obligatorios para el servidor, pero útiles para clientes)
+externalDocs:
+  description: "Notas de diseño y mapping a patrones (útil para el desarrollador backend)."
+  url: "https://example.local/docs/patrones-biblioteca"

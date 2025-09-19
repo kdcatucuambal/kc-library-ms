@@ -15,7 +15,7 @@ La clase Libro debe tener atributos: id, titulo, autor, tipo (Ficción/No Ficci�
 - Implementar Clean Code,
 - Implementar SOLID
 
-# Usa buenas prácticas como manejo de excepciones y cierre de recursos.
+- Usa buenas prácticas como manejo de excepciones y cierre de recursos.
 
 # Explicación de los patrones aplicados:
 

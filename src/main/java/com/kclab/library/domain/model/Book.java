@@ -12,7 +12,7 @@ public class Book {
     private String id;
     private String title;
     private String author;
-    private String tipo;
+    private String type;
     private String format;
     private String status;
 
