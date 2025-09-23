@@ -5,8 +5,8 @@ import lombok.Getter;
 @Getter
 public enum BookStatus {
 
-    AVAILABLE("Available"),
-    NOT_AVAILABLE("Not Available");
+    AVAILABLE("AVAILABLE"),
+    LOANED("LOANED");
 
     private final String value;
 

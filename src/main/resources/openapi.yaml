@@ -32,14 +32,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BookCreate'
+              $ref: '#/components/schemas/CreateBookRq'
       responses:
         "201":
           description: Libro creado correctamente
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Book'
+                $ref: '#/components/schemas/CreateBookRs'
         "400":
           description: Validación fallida
           content:
@@ -66,13 +66,13 @@ paths:
           schema:
             type: string
           description: Buscar por autor (parte o completo)
-        - name: strategy
-          in: query
-          schema:
-            type: string
-            enum: [title, author, smart]
-            default: smart
-          description: Estrategia de búsqueda (Strategy pattern). 'smart' = heurística que decide.
+#        - name: strategy
+#          in: query
+#          schema:
+#            type: string
+#            enum: [title, author, smart]
+#            default: smart
+#          description: Estrategia de búsqueda (Strategy pattern). 'smart' = heurística que decide.
         - name: page
           in: query
           schema:
@@ -94,7 +94,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BookList'
+                $ref: '#/components/schemas/QueryBooksRs'
         "400":
           description: Parámetros inválidos
           content:
@@ -273,16 +273,38 @@ paths:
 
 components:
   schemas:
-    # Modelo principal
+    CreateBookRq:
+      type: object
+      description: Entidad para crear un libro
+      properties:
+        book:
+          required:
+            - title
+            - author
+            - type
+            - format
+          allOf:
+            - $ref: '#/components/schemas/Book'
+
+
+    CreateBookRs:
+      type: object
+      description: Respuesta para creación de libro
+      properties:
+        book:
+          $ref: '#/components/schemas/Book'
+
+    QueryBooksRs:
+        type: object
+        description: Respuesta para consulta de libros
+        properties:
+          books:
+            type: array
+            items:
+              $ref: '#/components/schemas/Book'
+
     Book:
       type: object
-      required:
-        - id
-        - title
-        - author
-        - type
-        - format
-        - status
       properties:
         id:
           type: string
@@ -297,30 +319,25 @@ components:
         type:
           type: string
           description: Tipo de libro (Ficción/No Ficción)
-          enum: [FICCION, NO_FICCION]
+          enum:
+            - FICTION
+            - NON-FICTION
         format:
           type: string
           description: Formato del libro (Físico/Digital)
-          enum: [FISICO, DIGITAL]
+          enum:
+            - E-BOOK
+            - PHYSICAL
         status:
           type: string
           description: Estado del libro en la biblioteca
-          enum: [A, NA]
+          enum:
+            - AVAILABLE
+            - LOANED
         metadata:
           type: object
           description: Campos adicionales (p. ej. páginas, isbn, ubicacion, urlDescarga)
           additionalProperties: true
-      example:
-        id: "c0a8012e-0000-0000-0000-000000000001"
-        titulo: "Introducción a Patrones de Diseño"
-        autor: "Ana Pérez"
-        tipo: "NO_FICCION"
-        formato: "FISICO"
-        estado: "DISPONIBLE"
-        metadata:
-          isbn: "978-3-16-148410-0"
-          paginas: 320
-          ubicacion: "Estante A3"
 
     # Payload para crear libro (Builder + Factory + Chain validators aplicados en servidor)
     BookCreate:

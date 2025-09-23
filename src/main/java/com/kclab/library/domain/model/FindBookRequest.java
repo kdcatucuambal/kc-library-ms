@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class FindBookRequest {
 
+    private String strategyFinder;
     private String value;
     private String limit;
     private String offset;

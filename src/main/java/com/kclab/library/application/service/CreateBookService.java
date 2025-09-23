@@ -6,6 +6,7 @@ import com.kclab.library.application.service.factory.BookFactoryProvider;
 import com.kclab.library.application.service.validator.AuthorBookValidator;
 import com.kclab.library.application.service.validator.TitleBookValidator;
 import com.kclab.library.domain.model.Book;
+import com.kclab.library.domain.model.CreateBookDTO;
 import com.kclab.library.shared.lib.ValidatorContext;
 import com.kclab.library.shared.lib.ValidatorExecutor;
 import lombok.RequiredArgsConstructor;
@@ -24,17 +25,11 @@ public class CreateBookService implements CreateBookInputPort {
     private final AuthorBookValidator authorBookValidator;
 
     @Override
-    public Book execute(Book book) {
-        book.setId(UUID.randomUUID().toString());
+    public Book execute(CreateBookDTO bookDTO) {
+        var book = BookFactoryProvider.createBook(bookDTO);
         var validatorContext = validateBook(book);
         log.info("Book validation passed: {}", validatorContext);
-        var bookProvided = BookFactoryProvider.createBook(
-                book.getFormat(),
-                book.getType(),
-                book.getTitle(),
-                book.getAuthor(),
-                book.getId());
-        return this.bookRepository.save(bookProvided);
+        return this.bookRepository.save(book);
     }
 
     private ValidatorContext validateBook(Book book) {
@@ -43,7 +38,11 @@ public class CreateBookService implements CreateBookInputPort {
                 .add("book", book)
                 .build();
         return ValidatorExecutor
-                .validate(validatorContext, titleBookValidator, authorBookValidator);
+                .validate(
+                        validatorContext,
+                        titleBookValidator,
+                        authorBookValidator
+                );
     }
 
 }

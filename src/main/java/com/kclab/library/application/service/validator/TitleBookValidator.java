@@ -1,6 +1,5 @@
 package com.kclab.library.application.service.validator;
 
-import com.kclab.library.application.input.port.QueryBookInputPort;
 import com.kclab.library.application.output.port.BookRepositoryOutputPort;
 import com.kclab.library.domain.exception.BookAlreadyExistException;
 import com.kclab.library.domain.exception.InvalidBookException;

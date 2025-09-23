@@ -5,8 +5,8 @@ import lombok.Getter;
 @Getter
 public enum BookFormat {
 
-    DIGITAL("Digital"),
-    PRINT("Print");
+    E_BOOK("E-BOOK"),
+    PHYSICAL("PHYSICAL");
 
     private final String value;
 

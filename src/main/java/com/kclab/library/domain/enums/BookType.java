@@ -5,8 +5,8 @@ import lombok.Getter;
 @Getter
 public enum BookType {
 
-    FICTION("Fiction"),
-    NON_FICTION("Non-Fiction");
+    FICTION("FICTION"),
+    NON_FICTION("NON-FICTION");
 
     private final String value;
 

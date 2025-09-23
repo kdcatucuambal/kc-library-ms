@@ -1,10 +1,11 @@
 package com.kclab.library.application.service.factory.abs;
 
 import com.kclab.library.domain.model.Book;
+import com.kclab.library.domain.model.CreateBookDTO;
 
 public interface AbstractBookFactory {
 
-    Book createFictionBook(String id, String title, String author);
-    Book createNonFictionBook(String id, String title, String author);
+    Book createFictionBook(CreateBookDTO createBookDTO);
+    Book createNonFictionBook(CreateBookDTO createBookDTO);
 
 }
