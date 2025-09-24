@@ -22,7 +22,7 @@ tags:
 paths:
   /api/books:
     post:
-      tags: [Books]
+      tags: [ Books ]
       summary: Agregar un libro
       description: |
         Agrega un libro a la biblioteca. Se aplican validaciones (Chain of Responsibility:
@@ -47,7 +47,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ValidationError'
     get:
-      tags: [Books]
+      tags: [ Books ]
       summary: Listar o buscar libros
       description: |
         Lista todos los libros o realiza búsqueda con diferentes estrategias.
@@ -66,13 +66,13 @@ paths:
           schema:
             type: string
           description: Buscar por autor (parte o completo)
-#        - name: strategy
-#          in: query
-#          schema:
-#            type: string
-#            enum: [title, author, smart]
-#            default: smart
-#          description: Estrategia de búsqueda (Strategy pattern). 'smart' = heurística que decide.
+        #        - name: strategy
+        #          in: query
+        #          schema:
+        #            type: string
+        #            enum: [title, author, smart]
+        #            default: smart
+        #          description: Estrategia de búsqueda (Strategy pattern). 'smart' = heurística que decide.
         - name: page
           in: query
           schema:
@@ -104,7 +104,7 @@ paths:
 
   /api/books/{id}:
     get:
-      tags: [Books]
+      tags: [ Books ]
       summary: Obtener libro por id
       parameters:
         - in: path
@@ -127,7 +127,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
     put:
-      tags: [Books]
+      tags: [ Books ]
       summary: Actualizar metadatos del libro
       description: Actualiza título/autor/tipo/formato o estado; las validaciones se aplican.
       parameters:
@@ -164,7 +164,7 @@ paths:
 
   /api/books/{id}/lend:
     post:
-      tags: [Books]
+      tags: [ Books ]
       summary: Prestar un libro
       description: |
         Marca un libro como PRESTADO (Decorator: PrestamoDecorator) y notifica a los observadores
@@ -182,12 +182,12 @@ paths:
             schema:
               $ref: '#/components/schemas/LoanRequest'
       responses:
-        "200":
+        "201":
           description: Préstamo realizado y observadores notificados
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Book'
+                $ref: '#/components/schemas/LendResponse'
         "404":
           description: Libro no encontrado
           content:
@@ -209,7 +209,7 @@ paths:
 
   /api/observers:
     post:
-      tags: [Observers]
+      tags: [ Observers ]
       summary: Registrar un observador
       description: Registra un observador que será notificado en eventos (por ejemplo, préstamos).
       requestBody:
@@ -232,7 +232,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ValidationError'
     get:
-      tags: [Observadores]
+      tags: [ Observadores ]
       summary: Listar observadores registrados
       responses:
         "200":
@@ -246,7 +246,7 @@ paths:
 
   /api/legacy-books:
     post:
-      tags: [Legacy]
+      tags: [ Legacy ]
       summary: Adaptar y registrar un libro legacy
       description: |
         Permite enviar un objeto LegacyLibro (formato antiguo). El servicio adapta el libro
@@ -295,13 +295,21 @@ components:
           $ref: '#/components/schemas/Book'
 
     QueryBooksRs:
-        type: object
-        description: Respuesta para consulta de libros
-        properties:
-          books:
-            type: array
-            items:
-              $ref: '#/components/schemas/Book'
+      type: object
+      description: Respuesta para consulta de libros
+      properties:
+        books:
+          type: array
+          items:
+            $ref: '#/components/schemas/Book'
+
+    LendResponse:
+      type: object
+      description: Respuesta para préstamo de libro
+      properties:
+        wasLent:
+          type: boolean
+          description: Indica si el libro fue prestado exitosamente
 
     Book:
       type: object
@@ -356,10 +364,10 @@ components:
           description: Autor del libro (validado)
         type:
           type: string
-          enum: [FICCION, NO_FICCION]
+          enum: [ FICCION, NO_FICCION ]
         format:
           type: string
-          enum: [FISICO, DIGITAL]
+          enum: [ FISICO, DIGITAL ]
         metadata:
           type: object
           description: Datos opcionales (isbn, paginas, urlDescarga...)
@@ -382,13 +390,13 @@ components:
           type: string
         type:
           type: string
-          enum: [FICCION, NO_FICCION]
+          enum: [ FICCION, NO_FICCION ]
         format:
           type: string
-          enum: [FISICO, DIGITAL]
+          enum: [ FISICO, DIGITAL ]
         status:
           type: string
-          enum: [A, NA]
+          enum: [ A, NA ]
         metadata:
           type: object
           additionalProperties: true
@@ -420,21 +428,10 @@ components:
       type: object
       required:
         - borrower
-        - dueDate
       properties:
         borrower:
           type: string
           description: Nombre o identificador del prestatario
-        dueDate:
-          type: string
-          format: date
-          description: Fecha de devolución esperada (YYYY-MM-DD)
-        notes:
-          type: string
-      example:
-        borrower: "usuario123"
-        dueDate: "2025-10-01"
-        notes: "Préstamo para investigación"
 
     ObserverCreate:
       type: object
@@ -444,7 +441,7 @@ components:
       properties:
         type:
           type: string
-          enum: [EMAIL, WEBHOOK, LOG]
+          enum: [ EMAIL, WEBHOOK, LOG ]
           description: Tipo de observador
         target:
           type: string
@@ -545,16 +542,16 @@ components:
         description: "Única instancia de conexión H2 (in-memory)."
       FactoryMethod:
         name: LibroFactory
-        implementations: [FiccionFactory, NoFiccionFactory]
+        implementations: [ FiccionFactory, NoFiccionFactory ]
       AbstractFactory:
         name: AbstractLibroFactory
-        implementations: [LibroFisicoFactory, LibroDigitalFactory]
+        implementations: [ LibroFisicoFactory, LibroDigitalFactory ]
       Builder:
         name: LibroBuilder
         description: "Construye instancias de Libro respetando invariantes."
       Strategy:
         name: SearchStrategy
-        implementations: [SearchByTitle, SearchByAuthor]
+        implementations: [ SearchByTitle, SearchByAuthor ]
       Observer:
         name: PrestamoObserver
         description: "Observadores que reciben notificaciones al cambiar estado."
@@ -563,7 +560,7 @@ components:
         description: "Envuelve Libro para añadir comportamiento de préstamo."
       ChainOfResponsibility:
         name: Validador
-        chain: [ValidadorTitulo, ValidadorAutor]
+        chain: [ ValidadorTitulo, ValidadorAutor ]
       Adapter:
         name: LegacyLibroAdapter
         description: "Adapta LegacyLibro a la interfaz ILibro."

@@ -12,7 +12,5 @@ interface BookOperations {
     String getStatus();
     void setStatus(String status);
 
-    String getBookInfo();
-
     Book getBook();
 }

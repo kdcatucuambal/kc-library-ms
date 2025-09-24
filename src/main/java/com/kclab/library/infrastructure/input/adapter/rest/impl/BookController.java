@@ -1,18 +1,28 @@
 package com.kclab.library.infrastructure.input.adapter.rest.impl;
 
 import com.kclab.library.application.input.port.CreateBookInputPort;
+import com.kclab.library.application.input.port.LendableBookServiceInputPort;
 import com.kclab.library.application.input.port.QueryBookProviderInputPort;
 import com.kclab.library.domain.enums.BookFormat;
 import com.kclab.library.domain.enums.BookType;
 import com.kclab.library.domain.model.QueryBookRequest;
 
 import com.kclab.services.server.ApiApi;
-import com.kclab.services.server.models.*;
+import com.kclab.services.server.models.Book;
+import com.kclab.services.server.models.BookUpdate;
+import com.kclab.services.server.models.CreateBookRq;
+import com.kclab.services.server.models.CreateBookRs;
+import com.kclab.services.server.models.LegacyBook;
+import com.kclab.services.server.models.LoanRequest;
+import com.kclab.services.server.models.Observer;
+import com.kclab.services.server.models.ObserverCreate;
+import com.kclab.services.server.models.QueryBooksRs;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,8 +33,7 @@ public class BookController implements ApiApi {
 
     private final CreateBookInputPort createBookInputPort;
     private final QueryBookProviderInputPort queryBookProviderInputPort;
-
-
+    private final LendableBookServiceInputPort lendableBookServiceInputPort;
 
     @Override
     public ResponseEntity<QueryBooksRs> apiBooksGet(String title, String author, Integer page, Integer size) {
@@ -52,8 +61,14 @@ public class BookController implements ApiApi {
     }
 
     @Override
-    public ResponseEntity<Book> apiBooksIdLendPost(String id, LoanRequest loanRequest) {
-        return null;
+    public ResponseEntity<com.kclab.services.server.models.LendResponse> apiBooksIdLendPost(String id, LoanRequest loanRequest) {
+        var lent = lendableBookServiceInputPort.execute(id, loanRequest.getBorrower());
+        var res = new com.kclab.services.server.models.LendResponse();
+        res.setWasLent(lent);
+        return ResponseEntity
+                .created(URI.create("/books/" + id))
+                .body(res);
+
     }
 
     @Override
@@ -63,7 +78,7 @@ public class BookController implements ApiApi {
 
     @Override
     public ResponseEntity<CreateBookRs> apiBooksPost(CreateBookRq createBookRq) {
-        var book = createBookRq.getBook();
+                var book = createBookRq.getBook();
         var createBookDto = com.kclab.library.domain.model.CreateBookDTO
                 .builder()
                 .author(book.getAuthor())
@@ -92,6 +107,11 @@ public class BookController implements ApiApi {
     public ResponseEntity<Observer> apiObserversPost(ObserverCreate observerCreate) {
         return null;
     }
+
+
+
+
+
 
 
 //    @Override

@@ -49,12 +49,6 @@ public abstract class BookDecorator implements BookOperations {
         bookOperations.setStatus(status);
     }
 
-    @Override
-    public String getBookInfo() {
-        return bookOperations.getBookInfo();
-    }
-
-
 
 
 }

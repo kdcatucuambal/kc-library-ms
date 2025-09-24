@@ -45,11 +45,6 @@ public class BookAdapter implements BookOperations {
     }
 
     @Override
-    public String getBookInfo() {
-        return book.toString();
-    }
-
-    @Override
     public Book getBook() {
         return book;
     }

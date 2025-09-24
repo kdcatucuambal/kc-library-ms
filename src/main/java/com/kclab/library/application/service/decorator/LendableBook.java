@@ -1,80 +1,47 @@
 package com.kclab.library.application.service.decorator;
 
+import com.kclab.library.application.output.port.BookRepositoryOutputPort;
+import com.kclab.library.domain.enums.BookStatus;
 import com.kclab.library.domain.model.Book;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 
-class LendableBook extends BookDecorator {
+@Slf4j
+public class LendableBook extends BookDecorator {
+
     private String borrowerName;
-    private LocalDate loanDate;
-    private LocalDate dueDate;
-    private boolean isLoaned;
+    private final BookRepositoryOutputPort bookRepository;
 
-    public LendableBook(BookOperations bookOperations) {
+    public LendableBook(BookOperations bookOperations, BookRepositoryOutputPort bookRepository) {
         super(bookOperations);
-        this.isLoaned = false;
+        this.bookRepository = bookRepository;
     }
 
-    public boolean lendBook(String borrowerName, int loanDurationDays) {
-        if (isLoaned) {
-            System.out.println("El libro ya está prestado a: " + this.borrowerName);
+    public boolean lendBook(String borrowerName) {
+        if (isLoaned()) {
+            log.info("Book already loaned to: {}", this.borrowerName);
             return false;
         }
-
-        if (!"AVAILABLE".equalsIgnoreCase(getStatus())) {
-            System.out.println("El libro no está disponible para préstamo. Estado: " + getStatus());
-            return false;
-        }
-
         this.borrowerName = borrowerName;
-        this.loanDate = LocalDate.now();
-        this.dueDate = loanDate.plusDays(loanDurationDays);
-        this.isLoaned = true;
-        setStatus("LOANED");
-
-        System.out.println("Libro prestado exitosamente a: " + borrowerName);
+        setStatus(BookStatus.LOANED.getValue());
+        this.bookRepository.updateStatus(getBook());
         return true;
     }
+
 
     public boolean returnBook() {
-        if (!isLoaned) {
-            System.out.println("El libro no está prestado actualmente");
+        if (!isLoaned()) {
+            log.info("Book is not currently loaned.");
             return false;
         }
 
-        System.out.println("Libro devuelto por: " + borrowerName);
+        log.info("Book returned to: {}", this.borrowerName);
         this.borrowerName = null;
-        this.loanDate = null;
-        this.dueDate = null;
-        this.isLoaned = false;
-        setStatus("AVAILABLE");
+        setStatus(BookStatus.AVAILABLE.getValue());
         return true;
     }
 
-    public boolean isOverdue() {
-        return isLoaned && LocalDate.now().isAfter(dueDate);
-    }
-
-    public String getLoanInfo() {
-        if (!isLoaned) {
-            return "Libro no prestado";
-        }
-
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        String overdueStatus = isOverdue() ? " [VENCIDO]" : "";
-
-        return String.format("Prestado a: %s | Fecha préstamo: %s | Fecha límite: %s%s",
-                borrowerName,
-                loanDate.format(formatter),
-                dueDate.format(formatter),
-                overdueStatus);
-    }
-
-    @Override
-    public String getBookInfo() {
-        return super.getBookInfo() + "\n  Préstamo: " + getLoanInfo();
-    }
 
     @Override
     public Book getBook() {
@@ -82,8 +49,13 @@ class LendableBook extends BookDecorator {
     }
 
     // Getters adicionales
-    public String getBorrowerName() { return borrowerName; }
-    public LocalDate getLoanDate() { return loanDate; }
-    public LocalDate getDueDate() { return dueDate; }
-    public boolean isLoaned() { return isLoaned; }
+    public String getBorrowerName() {
+        return borrowerName;
+    }
+
+
+    public boolean isLoaned() {
+        var bookStatus = BookStatus.fromValue(bookRepository.findById(this.getBook().getId()).getStatus());
+        return BookStatus.LOANED.equals(bookStatus);
+    }
 }
