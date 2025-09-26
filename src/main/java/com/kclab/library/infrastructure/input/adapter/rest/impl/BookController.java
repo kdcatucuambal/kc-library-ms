@@ -36,11 +36,12 @@ public class BookController implements ApiApi {
     private final LendableBookServiceInputPort lendableBookServiceInputPort;
 
     @Override
-    public ResponseEntity<QueryBooksRs> apiBooksGet(String title, String author, Integer page, Integer size) {
+    public ResponseEntity<QueryBooksRs> apiBooksGet(String title, String author, String id, Integer page, Integer size) {
         var queryBookRequest = QueryBookRequest
                 .builder()
                 .author(author)
                 .title(title)
+                .id(id)
                 .build();
         var books = queryBookProviderInputPort.getBooks(queryBookRequest).stream().map(book ->{
             var b = new Book();
@@ -54,6 +55,7 @@ public class BookController implements ApiApi {
         });
         return ResponseEntity.ok(new QueryBooksRs().books(books.toList()));
     }
+
 
     @Override
     public ResponseEntity<Book> apiBooksIdGet(String id) {

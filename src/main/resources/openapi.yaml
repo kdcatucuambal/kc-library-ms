@@ -73,6 +73,11 @@ paths:
         #            enum: [title, author, smart]
         #            default: smart
         #          description: Estrategia de búsqueda (Strategy pattern). 'smart' = heurística que decide.
+        - name: id
+          in: query
+          schema:
+            type: string
+          description: Buscar por UUID exacto
         - name: page
           in: query
           schema:

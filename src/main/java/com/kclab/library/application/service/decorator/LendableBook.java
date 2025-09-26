@@ -45,7 +45,7 @@ public class LendableBook extends BookDecorator {
 
     @Override
     public Book getBook() {
-        return null;
+        return super.getBook();
     }
 
     // Getters adicionales
@@ -55,7 +55,8 @@ public class LendableBook extends BookDecorator {
 
 
     public boolean isLoaned() {
-        var bookStatus = BookStatus.fromValue(bookRepository.findById(this.getBook().getId()).getStatus());
+        var book = this.getBook();
+        var bookStatus = BookStatus.fromValue(bookRepository.findById(book.getId()).getStatus());
         return BookStatus.LOANED.equals(bookStatus);
     }
 }

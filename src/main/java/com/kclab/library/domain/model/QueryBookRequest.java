@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 public class QueryBookRequest {
     private String title;
     private String author;
+    private String id;
     private String limit;
     private String offset;
 

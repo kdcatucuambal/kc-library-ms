@@ -18,7 +18,13 @@ public class Util {
         } else if (request.getAuthor() != null && !request.getAuthor().isEmpty()) {
             requestBuilder.strategyFinder(Constant.FIND_BOOK_BY_AUTHOR);
             requestBuilder.value(request.getAuthor());
-        } else {
+        } else if (request.getId() != null && !request.getId().isEmpty()) {
+            requestBuilder.strategyFinder(Constant.FIND_BOOK_BY_ID);
+            requestBuilder.value(request.getId());
+        }
+
+
+        else {
             requestBuilder.strategyFinder(Constant.FIND_ALL_BOOKS);
         }
         return requestBuilder.build();
